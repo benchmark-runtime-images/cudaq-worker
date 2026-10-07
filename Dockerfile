@@ -3,6 +3,11 @@ FROM ${BASE_IMAGE}
 
 ARG BOOTSTRAP_SHA256=0d0156d915f7b9473518e2893983cbd1ff6c1dfa7824e984239ec9f58192308a
 
+# The upstream CUDA-Q image runs as an unprivileged user. Package installation
+# is confined to this immutable image-build layer; the resulting worker must
+# run as root so it can initialize host keys and sshd on a fresh Pod.
+USER root
+
 # Packages are installed only during the immutable build, never at worker
 # startup while a rental is billing.
 RUN apt-get update \
