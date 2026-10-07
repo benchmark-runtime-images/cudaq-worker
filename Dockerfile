@@ -28,25 +28,26 @@ RUN printf '%s  %s\n' "${BOOTSTRAP_SHA256}" /usr/local/sbin/pod-ssh-bootstrap.sh
     && rm -f /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub \
     && python3 - <<'PY'
 import importlib.metadata as metadata
+import cudaq
 import json
 import os
 import platform
 
-cudaq = metadata.version("cuda-quantum")
-if not cudaq.startswith("0.16.0"):
-    raise SystemExit(f"CUDA-Q drift: {cudaq}")
+cudaq_version = getattr(cudaq, "__version__", None) or metadata.version("cudaq")
+if not cudaq_version.startswith("0.16.0"):
+    raise SystemExit(f"CUDA-Q drift: {cudaq_version}")
 if not platform.python_version().startswith("3.12."):
     raise SystemExit(f"Python drift: {platform.python_version()}")
 if os.environ.get("CUDA_VERSION") != "13.0":
     raise SystemExit(f"CUDA drift: {os.environ.get('CUDA_VERSION')}")
 packages = {}
-for name in ("cuda-quantum", "cuquantum-python-cu13", "cuquantum-cu13", "cupy-cuda13x", "numpy"):
+for name in ("cudaq", "cuda-quantum-cu13", "cuquantum-python-cu13", "cuquantum-cu13", "cupy-cuda13x", "numpy"):
     try:
         packages[name] = metadata.version(name)
     except metadata.PackageNotFoundError:
         packages[name] = None
 with open("/usr/local/share/benchmark/runtime-matrix.json", "w", encoding="utf-8") as handle:
-    json.dump({"python": platform.python_version(), "cuda": os.environ["CUDA_VERSION"], "packages": packages}, handle, indent=2, sort_keys=True)
+    json.dump({"cudaq": cudaq_version, "python": platform.python_version(), "cuda": os.environ["CUDA_VERSION"], "packages": packages}, handle, indent=2, sort_keys=True)
     handle.write("\n")
 PY
 
