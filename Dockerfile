@@ -32,10 +32,15 @@ import cudaq
 import json
 import os
 import platform
+import re
 
-cudaq_version = getattr(cudaq, "__version__", None) or metadata.version("cudaq")
-if not cudaq_version.startswith("0.16.0"):
-    raise SystemExit(f"CUDA-Q drift: {cudaq_version}")
+cudaq_vendor_version = str(
+    getattr(cudaq, "__version__", None) or metadata.version("cudaq")
+)
+match = re.search(r"(?<![0-9])0\.16\.0(?![0-9])", cudaq_vendor_version)
+if match is None:
+    raise SystemExit(f"CUDA-Q drift: {cudaq_vendor_version}")
+cudaq_version = match.group(0)
 if not platform.python_version().startswith("3.12."):
     raise SystemExit(f"Python drift: {platform.python_version()}")
 if os.environ.get("CUDA_VERSION") != "13.0":
@@ -47,7 +52,7 @@ for name in ("cudaq", "cuda-quantum-cu13", "cuquantum-python-cu13", "cuquantum-c
     except metadata.PackageNotFoundError:
         packages[name] = None
 with open("/usr/local/share/benchmark/runtime-matrix.json", "w", encoding="utf-8") as handle:
-    json.dump({"cudaq": cudaq_version, "python": platform.python_version(), "cuda": os.environ["CUDA_VERSION"], "packages": packages}, handle, indent=2, sort_keys=True)
+    json.dump({"cudaq": cudaq_version, "cudaq_vendor_build": cudaq_vendor_version, "python": platform.python_version(), "cuda": os.environ["CUDA_VERSION"], "packages": packages}, handle, indent=2, sort_keys=True)
     handle.write("\n")
 PY
 
