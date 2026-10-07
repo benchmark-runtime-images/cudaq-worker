@@ -51,9 +51,11 @@ for name in ("cudaq", "cuda-quantum-cu13", "cuquantum-python-cu13", "cuquantum-c
         packages[name] = metadata.version(name)
     except metadata.PackageNotFoundError:
         packages[name] = None
+matrix = {"cudaq": cudaq_version, "cudaq_vendor_build": cudaq_vendor_version, "python": platform.python_version(), "cuda": os.environ["CUDA_VERSION"], "packages": packages}
 with open("/usr/local/share/benchmark/runtime-matrix.json", "w", encoding="utf-8") as handle:
-    json.dump({"cudaq": cudaq_version, "cudaq_vendor_build": cudaq_vendor_version, "python": platform.python_version(), "cuda": os.environ["CUDA_VERSION"], "packages": packages}, handle, indent=2, sort_keys=True)
+    json.dump(matrix, handle, indent=2, sort_keys=True)
     handle.write("\n")
+print("FROZEN_RUNTIME_MATRIX=" + json.dumps(matrix, sort_keys=True))
 PY
 
 LABEL org.opencontainers.image.title="Neutral CUDA-Q worker" \
